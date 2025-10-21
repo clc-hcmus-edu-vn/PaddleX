@@ -20,6 +20,7 @@ from .common import (
     CVResult,
     SortPolyBoxes,
     SortQuadBoxes,
+    SortQuadVertBoxes,
     cal_ocr_word_box,
     convert_points_to_boxes,
     rotate_image,

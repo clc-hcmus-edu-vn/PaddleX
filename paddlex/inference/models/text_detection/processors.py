@@ -552,7 +552,7 @@ class DBPostProcess:
         bbox_padding: Union[List[int], None] = None,
     ):
         """apply"""
-        boxes, scores = [], []
+        boxes, padded_boxes, scores = [], [], []
         for pred, img_shape in zip(preds[0], img_shapes):
             box, score = self.process(
                 pred,
@@ -561,12 +561,15 @@ class DBPostProcess:
                 box_thresh or self.box_thresh,
                 unclip_ratio or self.unclip_ratio,
             )
+            padded_box = box
             if bbox_padding:
-                box = self.apply_bbox_padding(box, img_shape, bbox_padding)
+                padded_box = self.apply_bbox_padding(box, img_shape, bbox_padding)
+                
             boxes.append(box)
+            padded_boxes.append(padded_boxes)
             scores.append(score)
         
-        return boxes, scores
+        return boxes, padded_boxes, scores
 
     def process(
         self,

@@ -106,7 +106,7 @@ class TextDetPredictor(BasePredictor):
         batch_imgs = self.pre_tfs["ToCHW"](imgs=batch_imgs)
         x = self.pre_tfs["ToBatch"](imgs=batch_imgs)
         batch_preds = self.infer(x=x)
-        polys, scores = self.post_op(
+        polys, padded_polys, scores = self.post_op(
             batch_preds,
             batch_shapes,
             thresh=thresh or self.thresh,
@@ -119,6 +119,7 @@ class TextDetPredictor(BasePredictor):
             "page_index": batch_data.page_indexes,
             "input_img": batch_raw_imgs,
             "dt_polys": polys,
+            "dt_padded_polys": padded_polys,
             "dt_scores": scores,
         }
 

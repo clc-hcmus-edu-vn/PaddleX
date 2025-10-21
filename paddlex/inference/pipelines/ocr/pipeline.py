@@ -29,6 +29,7 @@ from ..components import (
     CropByPolys,
     SortPolyBoxes,
     SortQuadBoxes,
+    SortQuadVertBoxes,
     cal_ocr_word_box,
     convert_points_to_boxes,
     rotate_image,
@@ -96,11 +97,12 @@ class _OCRPipeline(BasePipeline):
             self.text_det_limit_type = text_det_config.get("limit_type", "max")
             self.text_det_max_side_limit = text_det_config.get("max_side_limit", 4000)
             self.text_det_thresh = text_det_config.get("thresh", 0.3)
+            self.text_det_vert = text_det_config.get("vert", False)
             self.text_det_box_thresh = text_det_config.get("box_thresh", 0.6)
             self.text_det_bbox_padding = text_det_config.get("bbox_padding", None)
             self.input_shape = text_det_config.get("input_shape", None)
             self.text_det_unclip_ratio = text_det_config.get("unclip_ratio", 2.0)
-            self._sort_boxes = SortQuadBoxes()
+            self._sort_boxes = SortQuadVertBoxes() if self.text_det_vert else SortQuadBoxes()
             self._crop_by_polys = CropByPolys(det_box_type="quad")
         elif self.text_type == "seal":
             self.text_det_limit_side_len = text_det_config.get("limit_side_len", 736)
@@ -360,6 +362,10 @@ class _OCRPipeline(BasePipeline):
                 self.text_det_model(doc_preprocessor_images, **text_det_params)
             )
 
+            dt_padded_polys_list = [item["dt_padded_polys"] for item in det_results]
+
+            dt_padded_polys_list = [self._sort_boxes(item) for item in dt_padded_polys_list]
+            
             dt_polys_list = [item["dt_polys"] for item in det_results]
 
             dt_polys_list = [self._sort_boxes(item) for item in dt_polys_list]
@@ -384,12 +390,12 @@ class _OCRPipeline(BasePipeline):
                     batch_data.input_paths,
                     batch_data.page_indexes,
                     doc_preprocessor_results,
-                    dt_polys_list,
+                    dt_padded_polys_list,
                 )
             ]
 
             indices = list(range(len(doc_preprocessor_images)))
-            indices = [idx for idx in indices if len(dt_polys_list[idx]) > 0]
+            indices = [idx for idx in indices if len(dt_padded_polys_list[idx]) > 0]
 
             if indices:
                 all_subs_of_imgs = []
@@ -397,7 +403,7 @@ class _OCRPipeline(BasePipeline):
                 for idx in indices:
                     all_subs_of_img = list(
                         self._crop_by_polys(
-                            doc_preprocessor_images[idx], dt_polys_list[idx]
+                            doc_preprocessor_images[idx], dt_padded_polys_list[idx]
                         )
                     )
                     all_subs_of_imgs.extend(all_subs_of_img)
@@ -426,6 +432,7 @@ class _OCRPipeline(BasePipeline):
                         chunk_indices[i] : chunk_indices[i + 1]
                     ]
                     res = results[idx]
+                    dt_padded_polys = dt_padded_polys_list[idx]
                     dt_polys = dt_polys_list[idx]
                     sub_img_info_list = [
                         {
@@ -456,7 +463,7 @@ class _OCRPipeline(BasePipeline):
                             if return_word_box:
                                 word_box_content_list, word_box_list = cal_ocr_word_box(
                                     rec_res["rec_text"][0],
-                                    dt_polys[sno],
+                                    dt_padded_polys[sno],
                                     rec_res["rec_text"][1],
                                 )
                                 res["text_word"].append(word_box_content_list)
@@ -467,10 +474,13 @@ class _OCRPipeline(BasePipeline):
                             res["rec_scores"].append(rec_res["rec_score"])
                             res["vis_fonts"].append(rec_res["vis_font"])
                             res["rec_polys"].append(dt_polys[sno])
+                            res["rec_padded_polys"].append(dt_padded_polys[sno])
             for res in results:
                 if self.text_type == "general":
                     rec_boxes = convert_points_to_boxes(res["rec_polys"])
                     res["rec_boxes"] = rec_boxes
+                    rec_padded_boxes = convert_points_to_boxes(res["rec_padded_polys"])
+                    res["rec_padded_boxes"] = rec_padded_boxes
                     if return_word_box:
                         res["text_word_boxes"] = [
                             convert_points_to_boxes(line)
