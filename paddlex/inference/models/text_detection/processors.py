@@ -566,7 +566,7 @@ class DBPostProcess:
                 padded_box = self.apply_bbox_padding(box, img_shape, bbox_padding)
                 
             boxes.append(box)
-            padded_boxes.append(padded_boxes)
+            padded_boxes.append(padded_box)
             scores.append(score)
         
         return boxes, padded_boxes, scores
