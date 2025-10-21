@@ -84,8 +84,8 @@ class SortQuadVertBoxes(BaseOperator):
         results = {}
         midpoints = []
 
-        # Step 1: Group boxes into horizontal lines
-        for i, box in enumerate(dt_polys):
+        # Step 1: Group boxes into lines (based on vertical overlap)
+        for box in dt_polys:
             min_max_h = get_min_max_h(box)
             c = sum(min_max_h) / 2  # vertical center
             for j, midpoint in enumerate(midpoints):
@@ -96,19 +96,21 @@ class SortQuadVertBoxes(BaseOperator):
                 midpoints.append(c)
                 results[len(midpoints) - 1] = [box]
 
-        # Step 2: Sort lines top-to-bottom
-        if len(results) > 1:
-            line_items = list(results.items())
-            line_items.sort(key=lambda kv: get_min_max_h(kv[1][0])[0])  # smallest y first
-            results = {i: v for i, (_, v) in enumerate(line_items)}
-
-        # Step 3: Sort boxes within each line right-to-left
+        # Step 2: Sort each line right-to-left
         for k in results:
             results[k] = sorted(
                 results[k],
-                key=lambda b: np.mean([p[0] for p in b]),  # sort by mean x
-                reverse=True,  # right-to-left
+                key=lambda b: np.mean([p[0] for p in b]),  # average x of the box
+                reverse=True,  # right → left
             )
+
+        # Step 3: Sort lines top-to-bottom
+        if len(results) > 1:
+            line_items = list(results.items())
+            line_items.sort(
+                key=lambda kv: np.mean([p[1] for p in kv[1][0]])  # mean y of the first box in the line
+            )
+            results = {i: v for i, (_, v) in enumerate(line_items)}
 
         # Step 4: Flatten final result
         sorted_boxes = [box for _, line_boxes in results.items() for box in line_boxes]
