@@ -65,7 +65,7 @@ class TextRecPredictor(BasePredictor):
         pre_tfs = {"Read": ReadImage(format="RGB")}
         for cfg in self.config["PreProcess"]["transform_ops"]:
             tf_key = list(cfg.keys())[0]
-            assert tf_key in self._FUNC_MAP
+            assert tf_key in self._FUNC_MAP, f"Key {tf_key} in not {self._FUNC_MAP}"
             func = self._FUNC_MAP[tf_key]
             args = cfg.get(tf_key, {})
             name, op = func(self, **args) if args else func(self)
@@ -145,7 +145,7 @@ class TextRecPredictor(BasePredictor):
     @register("MultiLabelEncode")
     def foo(self, *args, **kwargs):
         return None, None
-    
+
     @register("CTCLabelEncode")
     def foo(self, *args, **kwargs):
         return None, None
