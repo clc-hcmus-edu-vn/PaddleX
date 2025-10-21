@@ -71,22 +71,49 @@ class SortQuadVertBoxes(BaseOperator):
         return:
             sorted boxes(ndarray) with shape [4, 2]
         """
-        dt_boxes = np.array(dt_polys)
-        num_boxes = dt_boxes.shape[0]
-        sorted_boxes = sorted(dt_boxes, key=lambda x: (x[0][1], -x[0][0]))
-        _boxes = list(sorted_boxes)
+        def get_min_max_h(box):
+            """Get min_y and max_y of a quad box."""
+            ys = [p[1] for p in box]
+            return min(ys), max(ys)
 
-        for i in range(num_boxes - 1):
-            for j in range(i, -1, -1):
-                if abs(_boxes[j + 1][0][1] - _boxes[j][0][1]) < 10 and (
-                    _boxes[j + 1][0][0] > _boxes[j][0][0]
-                ):
-                    tmp = _boxes[j]
-                    _boxes[j] = _boxes[j + 1]
-                    _boxes[j + 1] = tmp
-                else:
+        def is_in_range(cur_range, ref_mid, thresh=10):
+            """Check if vertical midpoint overlaps with reference midpoint."""
+            cur_min, cur_max = cur_range
+            return abs((cur_min + cur_max) / 2 - ref_mid) < thresh
+
+        results = {}
+        midpoints = []
+
+        # Step 1: Group boxes into horizontal lines
+        for i, box in enumerate(dt_polys):
+            min_max_h = get_min_max_h(box)
+            c = sum(min_max_h) / 2  # vertical center
+            for j, midpoint in enumerate(midpoints):
+                if is_in_range(min_max_h, midpoint):
+                    results.setdefault(j, []).append(box)
                     break
-        return _boxes
+            else:
+                midpoints.append(c)
+                results[len(midpoints) - 1] = [box]
+
+        # Step 2: Sort lines top-to-bottom
+        if len(results) > 1:
+            line_items = list(results.items())
+            line_items.sort(key=lambda kv: get_min_max_h(kv[1][0])[0])  # smallest y first
+            results = {i: v for i, (_, v) in enumerate(line_items)}
+
+        # Step 3: Sort boxes within each line right-to-left
+        for k in results:
+            results[k] = sorted(
+                results[k],
+                key=lambda b: np.mean([p[0] for p in b]),  # sort by mean x
+                reverse=True,  # right-to-left
+            )
+
+        # Step 4: Flatten final result
+        sorted_boxes = [box for _, line_boxes in results.items() for box in line_boxes]
+
+        return np.array(sorted_boxes)
 
 
 class SortPolyBoxes(BaseOperator):
