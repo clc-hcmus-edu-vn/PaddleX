@@ -376,6 +376,7 @@ class _OCRPipeline(BasePipeline):
                     "page_index": page_index,
                     "doc_preprocessor_res": doc_preprocessor_res,
                     "dt_polys": dt_polys,
+                    "dt_padded_polys": dt_padded_polys,
                     "model_settings": model_settings,
                     "text_det_params": text_det_params,
                     "text_type": self.text_type,
@@ -384,12 +385,14 @@ class _OCRPipeline(BasePipeline):
                     "rec_texts": [],
                     "rec_scores": [],
                     "rec_polys": [],
+                    "rec_padded_polys": [],
                     "vis_fonts": [],
                 }
-                for input_path, page_index, doc_preprocessor_res, dt_polys in zip(
+                for input_path, page_index, doc_preprocessor_res, dt_polys, dt_padded_polys in zip(
                     batch_data.input_paths,
                     batch_data.page_indexes,
                     doc_preprocessor_results,
+                    dt_polys_list,
                     dt_padded_polys_list,
                 )
             ]
