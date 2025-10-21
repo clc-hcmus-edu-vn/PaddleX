@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import math
-from typing import Union
+from typing import List, Union
 
 import numpy as np
 
@@ -483,6 +483,64 @@ class DBPostProcess:
 
         cv2.fillPoly(mask, contour.reshape(1, -1, 2).astype(np.int32), 1)
         return cv2.mean(bitmap[ymin : ymax + 1, xmin : xmax + 1], mask)[0]
+        
+    def apply_bbox_padding(self, dt_boxes, image_shape, bbox_padding):            
+        img_height, img_width = image_shape[0:2]
+        
+        if isinstance(bbox_padding, (list, tuple)) and len(bbox_padding) == 4:
+            left_pad, top_pad, right_pad, bottom_pad = bbox_padding
+        else:
+            # If single value, apply to all sides
+            left_pad = top_pad = right_pad = bottom_pad = bbox_padding
+            
+        padded_boxes = []
+        for box in dt_boxes:
+            if type(box) is list:
+                box = np.array(box)
+            
+            # Get the bounding rectangle to determine relative positions
+            min_x, max_x = np.min(box[:, 0]), np.max(box[:, 0])
+            min_y, max_y = np.min(box[:, 1]), np.max(box[:, 1])
+            
+            # Calculate center for reference
+            center_x = (min_x + max_x) / 2
+            center_y = (min_y + max_y) / 2
+            
+            # Create padded box by moving each vertex outward
+            padded_box = box.copy().astype(np.float32)
+            
+            for i in range(len(box)):
+                x, y = box[i]
+                
+                # Calculate how much to move this vertex in X direction
+                if x < center_x:  # Left side
+                    dx = -left_pad
+                else:  # Right side  
+                    dx = right_pad
+                    
+                # Calculate how much to move this vertex in Y direction
+                if y < center_y:  # Top side
+                    dy = -top_pad
+                else:  # Bottom side
+                    dy = bottom_pad
+                
+                # For vertices exactly at center, apply average padding
+                if x == center_x:
+                    dx = (right_pad - left_pad) / 2
+                if y == center_y:
+                    dy = (bottom_pad - top_pad) / 2
+                
+                # Apply the padding
+                padded_box[i, 0] = x + dx
+                padded_box[i, 1] = y + dy
+            
+            # Clip to image boundaries
+            padded_box[:, 0] = np.clip(padded_box[:, 0], 0, img_width - 1)
+            padded_box[:, 1] = np.clip(padded_box[:, 1], 0, img_height - 1)
+            
+            padded_boxes.append(padded_box)
+        
+        return np.array(padded_boxes) if padded_boxes else dt_boxes
 
     def __call__(
         self,
@@ -491,6 +549,7 @@ class DBPostProcess:
         thresh: Union[float, None] = None,
         box_thresh: Union[float, None] = None,
         unclip_ratio: Union[float, None] = None,
+        bbox_padding: Union[List[int], None] = None,
     ):
         """apply"""
         boxes, scores = [], []
@@ -502,8 +561,11 @@ class DBPostProcess:
                 box_thresh or self.box_thresh,
                 unclip_ratio or self.unclip_ratio,
             )
+            if bbox_padding:
+                box = self.apply_bbox_padding(box, img_shape, bbox_padding)
             boxes.append(box)
             scores.append(score)
+        
         return boxes, scores
 
     def process(

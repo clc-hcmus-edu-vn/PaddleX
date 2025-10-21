@@ -42,6 +42,7 @@ class TextDetPredictor(BasePredictor):
         unclip_ratio: Union[float, None] = None,
         input_shape=None,
         max_side_limit: int = 4000,
+        bbox_padding: Union[List[int], None] = None,
         *args,
         **kwargs
     ):
@@ -54,6 +55,7 @@ class TextDetPredictor(BasePredictor):
         self.unclip_ratio = unclip_ratio
         self.input_shape = input_shape
         self.max_side_limit = max_side_limit
+        self.bbox_padding = bbox_padding
         self.pre_tfs, self.infer, self.post_op = self._build()
 
     def _build_batch_sampler(self):
@@ -173,6 +175,7 @@ class TextDetPredictor(BasePredictor):
                 thresh=self.thresh or kwargs.get("thresh", 0.3),
                 box_thresh=self.box_thresh or kwargs.get("box_thresh", 0.6),
                 unclip_ratio=self.unclip_ratio or kwargs.get("unclip_ratio", 2.0),
+                bbox_padding=self.bbox_padding or kwargs.get("bbox_padding", None),
                 max_candidates=kwargs.get("max_candidates", 1000),
                 use_dilation=kwargs.get("use_dilation", False),
                 score_mode=kwargs.get("score_mode", "fast"),
