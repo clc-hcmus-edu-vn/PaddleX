@@ -145,6 +145,10 @@ class TextRecPredictor(BasePredictor):
     @register("MultiLabelEncode")
     def foo(self, *args, **kwargs):
         return None, None
+    
+    @register("CTCLabelEncode")
+    def foo(self, *args, **kwargs):
+        return None, None
 
     @register("KeepKeys")
     def foo(self, *args, **kwargs):
