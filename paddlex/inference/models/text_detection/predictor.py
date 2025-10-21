@@ -90,6 +90,7 @@ class TextDetPredictor(BasePredictor):
         box_thresh: Union[float, None] = None,
         unclip_ratio: Union[float, None] = None,
         max_side_limit: Union[int, None] = None,
+        bbox_padding: Union[List[int], None] = None,
     ):
 
         batch_raw_imgs = self.pre_tfs["Read"](imgs=batch_data.instances)
@@ -111,6 +112,7 @@ class TextDetPredictor(BasePredictor):
             thresh=thresh or self.thresh,
             box_thresh=box_thresh or self.box_thresh,
             unclip_ratio=unclip_ratio or self.unclip_ratio,
+            bbox_padding=bbox_padding or self.bbox_padding,
         )
         return {
             "input_path": batch_data.input_paths,
