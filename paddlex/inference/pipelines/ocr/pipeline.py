@@ -97,6 +97,7 @@ class _OCRPipeline(BasePipeline):
             self.text_det_max_side_limit = text_det_config.get("max_side_limit", 4000)
             self.text_det_thresh = text_det_config.get("thresh", 0.3)
             self.text_det_box_thresh = text_det_config.get("box_thresh", 0.6)
+            self.text_det_bbox_padding = text_det_config.get("bbox_padding", None)
             self.input_shape = text_det_config.get("input_shape", None)
             self.text_det_unclip_ratio = text_det_config.get("unclip_ratio", 2.0)
             self._sort_boxes = SortQuadBoxes()
@@ -123,6 +124,7 @@ class _OCRPipeline(BasePipeline):
             box_thresh=self.text_det_box_thresh,
             unclip_ratio=self.text_det_unclip_ratio,
             input_shape=self.input_shape,
+            bbox_padding=self.text_det_bbox_padding,
         )
 
         text_rec_config = config.get("SubModules", {}).get(
