@@ -310,7 +310,7 @@ ALL_MODELS = [
     "PP-OCRv5_mobile_det",
     "PP-OCRv5_server_rec",
     "PP-OCRv5_mobile_rec",
-    "CLCLab-SVTRNet_server",
+    "SVTRNet",
     "eslav_PP-OCRv5_mobile_rec",
     "PP-DocBee2-3B",
     "latin_PP-OCRv5_mobile_rec",

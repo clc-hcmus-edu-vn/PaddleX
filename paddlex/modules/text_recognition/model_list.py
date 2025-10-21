@@ -33,7 +33,7 @@ MODELS = [
     "ch_RepSVTR_rec",
     "PP-OCRv5_server_rec",
     "PP-OCRv5_mobile_rec",
-    "CLCLab-SVTRNet_server",
+    "SVTRNet",
     "latin_PP-OCRv5_mobile_rec",
     "eslav_PP-OCRv5_mobile_rec",
     "korean_PP-OCRv5_mobile_rec",
