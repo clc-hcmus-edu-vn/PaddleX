@@ -61,6 +61,32 @@ class OCRReisizeNormImg:
         padding_im = np.zeros((imgC, imgH, imgW), dtype=np.float32)
         padding_im[:, :, 0:resized_w] = resized_image
         return padding_im
+    
+    def resize_norm_img_svtr(self, img, image_shape, padding=True, interpolation=cv2.INTER_LINEAR):
+        imgC, imgH, imgW = image_shape
+        h = img.shape[0]
+        w = img.shape[1]
+        if not padding:
+            resized_image = cv2.resize(img, (imgW, imgH), interpolation=interpolation)
+            resized_w = imgW
+        else:
+            ratio = w / float(h)
+            if math.ceil(imgH * ratio) > imgW:
+                resized_w = imgW
+            else:
+                resized_w = int(math.ceil(imgH * ratio))
+            resized_image = cv2.resize(img, (resized_w, imgH))
+        resized_image = resized_image.astype("float32")
+        if image_shape[0] == 1:
+            resized_image = resized_image / 255
+            resized_image = resized_image[np.newaxis, :]
+        else:
+            resized_image = resized_image.transpose((2, 0, 1)) / 255
+        resized_image -= 0.5
+        resized_image /= 0.5
+        padding_im = np.zeros((imgC, imgH, imgW), dtype=np.float32)
+        padding_im[:, :, 0:resized_w] = resized_image
+        return padding_im
 
     def __call__(self, imgs):
         """apply"""
@@ -70,12 +96,12 @@ class OCRReisizeNormImg:
             return [self.staticResize(img) for img in imgs]
 
     def resize(self, img):
-        imgC, imgH, imgW = self.rec_image_shape
-        max_wh_ratio = imgW / imgH
-        h, w = img.shape[:2]
-        wh_ratio = w * 1.0 / h
-        max_wh_ratio = max(max_wh_ratio, wh_ratio)
-        img = self.resize_norm_img(img, max_wh_ratio)
+        # imgC, imgH, imgW = self.rec_image_shape
+        # max_wh_ratio = imgW / imgH
+        # h, w = img.shape[:2]
+        # wh_ratio = w * 1.0 / h
+        # max_wh_ratio = max(max_wh_ratio, wh_ratio)
+        img = self.resize_norm_img_svtr(img, self.rec_image_shape)
         return img
 
     def staticResize(self, img):
