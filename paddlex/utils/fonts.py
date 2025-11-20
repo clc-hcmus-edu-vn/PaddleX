@@ -107,7 +107,7 @@ if Path(str(LOCAL_FONT_FILE_PATH)).is_file():
 
 PINGFANG_FONT = Font(font_name="PingFang-SC-Regular.ttf")
 SIMFANG_FONT = Font(font_name="simfang.ttf")
-NOMNATONG_FONT = Font(local_path="paddlex/utils/fonts/NomNaTong-Regular.ttf")
+NOMNATONG_FONT = Font()
 LATIN_FONT = Font(font_name="latin.ttf")
 TH_FONT = Font(font_name="th.ttf")
 EL_FONT = Font(font_name="el.ttf")
