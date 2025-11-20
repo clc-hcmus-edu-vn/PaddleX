@@ -157,6 +157,9 @@ class TextRecPredictor(BasePredictor):
     def get_vis_font(self):
         if self.model_name.startswith(("PP-OCR", "en_PP-OCR")):
             return SIMFANG_FONT
+            
+        if self.model_name.startswith("CLCLab"):
+            return SIMFANG_FONT
 
         if self.model_name in (
             "latin_PP-OCRv3_mobile_rec",

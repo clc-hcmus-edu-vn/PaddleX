@@ -316,7 +316,7 @@ register_model_info(
 
 register_model_info(
     {
-        "model_name": "SVTRNet",
+        "model_name": "CLCLab-SVTRNet",
         "suite": "TextRec",
         "config_path": osp.join(PDX_CONFIG_DIR, "CLCLab-SVTRNet_ch_server.yaml"),
         "supported_apis": ["train", "evaluate", "predict", "export"],
@@ -325,7 +325,7 @@ register_model_info(
 
 register_model_info(
     {
-        "model_name": "SVTRNet",
+        "model_name": "CLCLab-SVTRNet",
         "suite": "TextRec",
         "config_path": osp.join(PDX_CONFIG_DIR, "CLCLab-SVTRNet_nom_server.yaml"),
         "supported_apis": ["train", "evaluate", "predict", "export"],
