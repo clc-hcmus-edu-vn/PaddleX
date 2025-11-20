@@ -25,6 +25,7 @@ from ....utils.fonts import (
     KOREAN_FONT,
     LATIN_FONT,
     SIMFANG_FONT,
+    NOMNATONG_FONT,
     TAMIL_FONT,
     TELUGU_FONT,
     TH_FONT,
@@ -159,7 +160,7 @@ class TextRecPredictor(BasePredictor):
             return SIMFANG_FONT
             
         if self.model_name.startswith("CLCLab"):
-            return SIMFANG_FONT
+            return NOMNATONG_FONT
 
         if self.model_name in (
             "latin_PP-OCRv3_mobile_rec",
