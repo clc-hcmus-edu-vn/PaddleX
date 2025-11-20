@@ -295,7 +295,7 @@ class BaseRecLabelDecode:
 class CTCLabelDecode(BaseRecLabelDecode):
     """Convert between text-label and text-index"""
 
-    def __init__(self, character_list=None, use_space_char=True):
+    def __init__(self, character_list=None, use_space_char=False):
         super().__init__(character_list, use_space_char=use_space_char)
 
     def __call__(self, pred, return_word_box=False, **kwargs):
