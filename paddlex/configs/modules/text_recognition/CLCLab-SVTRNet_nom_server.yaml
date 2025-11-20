@@ -6,16 +6,16 @@ Global:
   distributed: true
   log_smooth_window: 20
   print_batch_step: 10
-  save_model_dir: ./output/rec_svtrnet_base_nom_exp_b2.4.0/
+  save_model_dir: null
   save_epoch_step: 1
   eval_batch_step:
     - 0
     - 4022
   cal_metric_during_train: true
   pretrained_model: null
-  checkpoints: ./output/rec_svtrnet_base_nom_exp_b2.4.0/best_accuracy
-  character_dict_path: ./ppocr/utils/dict/PP-Thesis/clclab_31102025.txt
-  save_inference_dir: ./output/rec_svtrnet_base_nom_exp_b2.4.0/inference
+  checkpoints: null
+  character_dict_path: ./ppocr/utils/dict/clclab_nom_dict.txt
+  save_inference_dir: null
   use_visualdl: false
   infer_img: null
   save_res_path: null
