@@ -1,0 +1,212 @@
+Global:
+  model_name: SVTRNet
+  debug: false
+  use_gpu: true
+  epoch_num: 40
+  distributed: true
+  log_smooth_window: 20
+  print_batch_step: 10
+  save_model_dir: ./output/rec_svtrnet_base_nom_exp_b2.4.0/
+  save_epoch_step: 1
+  eval_batch_step:
+    - 0
+    - 4022
+  cal_metric_during_train: true
+  pretrained_model: null
+  checkpoints: ./output/rec_svtrnet_base_nom_exp_b2.4.0/best_accuracy
+  character_dict_path: ./ppocr/utils/dict/PP-Thesis/clclab_31102025.txt
+  save_inference_dir: ./output/rec_svtrnet_base_nom_exp_b2.4.0/inference
+  use_visualdl: false
+  infer_img: null
+  save_res_path: null
+  infer_mode: false
+  use_space_char: false
+  max_text_length: 40
+  d2s_train_image_shape:
+    - 3
+    - 48
+    - 960
+
+Optimizer:
+  name: AdamW
+  beta1: 0.9
+  beta2: 0.999
+  epsilon: 1.0e-08
+  weight_decay: 0.05
+  no_weight_decay_name: norm
+  one_dim_param_no_weight_decay: true
+  lr:
+    name: Cosine
+    learning_rate: 0.0001
+    warmup_epoch: 3
+    eta_min: 5.0e-06
+Architecture:
+  model_type: rec
+  algorithm: SVTR
+  Transform:
+    name: TPS
+    num_fiducial: 10
+    loc_lr: 0.1
+    model_name: small
+  Backbone:
+    name: SVTRNet
+    img_size:
+      - 48
+      - 960
+    out_char_num: 40
+    out_channels: 256
+    patch_merging: Conv
+    patch_size:
+      - 4
+      - 8
+    drop_rate: 0.15
+    last_drop: 0.15
+    attn_drop_rate: 0.15
+    drop_path_rate: 0.15
+    embed_dim:
+      - 128
+      - 256
+      - 384
+    depth:
+      - 3
+      - 6
+      - 6
+    num_heads:
+      - 4
+      - 8
+      - 12
+    mixer:
+      - Local
+      - Local
+      - Local
+      - Local
+      - Local
+      - Local
+      - Local
+      - Local
+      - Global
+      - Global
+      - Global
+      - Global
+      - Global
+      - Global
+      - Global
+      - Global
+      - Global
+      - Global
+    local_mixer:
+      - - 7
+        - 11
+      - - 7
+        - 11
+      - - 7
+        - 11
+    last_stage: true
+    prenorm: true
+  Neck:
+    name: SequenceEncoder
+    encoder_type: reshape
+  Head:
+    name: CTCHead
+Loss:
+  name: CTCLoss
+  use_focal_loss: true
+PostProcess:
+  name: CTCLabelDecode
+Metric:
+  name: RecMetric
+  main_indicator: acc
+Train:
+  dataset:
+    name: SimpleDataSet
+    data_dir: ./train_data/
+    label_file_list:
+      - ./train_data/Labels/Train/HisDoc1B_300k.txt
+      - ./train_data/Labels/Train/M5HisDoc_Regular_40.txt
+      - ./train_data/Labels/Train/nomna_train.txt
+      - ./train_data/Labels/Train/CPNK-vertical_all.txt
+      - ./train_data/Labels/Train/HVK_001_vertical_v1_y850_all.txt
+      - ./train_data/Labels/Train/RBI_003_02_all.txt
+      - ./train_data/Labels/Train/RBI_003_03_all.txt
+      - ./train_data/Labels/Train/sac-phong_all.txt
+      - ./train_data/Labels/Train/Tale-of-Kieu-1870_all.txt
+      - ./train_data/Labels/Train/Tale-of-Kieu-1902_all.txt
+      - ./train_data/Labels/Train/ThachSanh-Doc_all.txt
+      - ./train_data/Labels/Train/NomCongGiao/RB_HuongSonQuanTheAm_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_001_000_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_003_000_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_004_000_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_005_000_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_006_000_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_007_000_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_009_000_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_00X_000_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_010_000_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_011_000_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_012_000_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_013_000_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_014_000_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_016_000_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_019_002_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_019_003_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_020_000_train.txt
+      - ./train_data/Labels/Train/NomCongGiao/RCM_021_000_train.txt
+    ext_op_transform_idx: 1
+    transforms:
+      - DecodeImage:
+          img_mode: BGR
+          channel_first: false
+      - RecConAug:
+          prob: 0.5
+          ext_data_num: 2
+          image_shape:
+            - 48
+            - 960
+            - 3
+      - RecAug: null
+      - CTCLabelEncode: null
+      - SVTRRecResizeImg:
+          image_shape:
+            - 3
+            - 48
+            - 960
+          padding: true
+      - KeepKeys:
+          keep_keys:
+            - image
+            - label
+            - length
+  loader:
+    shuffle: true
+    batch_size_per_card: 16
+    drop_last: true
+    num_workers: 12
+Eval:
+  dataset:
+    name: SimpleDataSet
+    data_dir: ./train_data/Nom_Eval/
+    label_file_list:
+      - ./train_data/Nom_Eval/all.txt
+    transforms:
+      - DecodeImage:
+          img_mode: BGR
+          channel_first: false
+      - CTCLabelEncode: null
+      - SVTRRecResizeImg:
+          image_shape:
+            - 3
+            - 48
+            - 960
+          padding: true
+      - KeepKeys:
+          keep_keys:
+            - image
+            - label
+            - length
+            - filename
+  loader:
+    shuffle: false
+    drop_last: false
+    batch_size_per_card: 64
+    num_workers: 4
+profiler_options: null
