@@ -206,7 +206,7 @@ XPU_WHITELIST = [
     "PP-OCRv4_mobile_seal_det",
     "PP-OCRv5_server_rec",
     "PP-OCRv5_mobile_rec",
-    "SVTRNet",
+    "CLCLab-SVTRNet",
     "PPDocBee-2B",
     "PPDocBee-7B",
     "PP-FormulaNet-S",

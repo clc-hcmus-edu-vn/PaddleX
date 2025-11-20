@@ -1,5 +1,5 @@
 Global:
-  model_name: SVTRNet
+  model_name: CLCLab-SVTRNet
   debug: false
   use_gpu: true
   epoch_num: 40
