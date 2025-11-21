@@ -99,7 +99,6 @@ class OCRResult(BaseCVResult):
                 boxes.append(word_region)
                 txts.append(text_word[idx])
         else:
-            boxes = self["rec_padded_polys"]
             txts = self["rec_texts"]
         image = self["doc_preprocessor_res"]["output_img"]
         h, w = image.shape[0:2]
@@ -170,11 +169,6 @@ class OCRResult(BaseCVResult):
             if self["text_type"] == "seal"
             else np.array(self["dt_polys"])
         )
-        data["dt_padded_polys"] = (
-            self["dt_padded_polys"]
-            if self["text_type"] == "seal"
-            else np.array(self["dt_padded_polys"])
-        )
         data["text_det_params"] = self["text_det_params"]
         data["text_type"] = self["text_type"]
         if "textline_orientation_angles" in self:
@@ -191,12 +185,6 @@ class OCRResult(BaseCVResult):
             else np.array(self["rec_polys"])
         )
         data["rec_boxes"] = np.array(self["rec_boxes"])
-        data["rec_padded_polys"] = (
-            self["rec_padded_polys"]
-            if self["text_type"] == "seal"
-            else np.array(self["rec_padded_polys"])
-        )
-        data["rec_padded_boxes"] = np.array(self["rec_padded_boxes"])
         if "text_word_boxes" in self:
             data["text_word_boxes"] = self["text_word_boxes"]
             data["text_word"] = self["text_word"]
@@ -221,7 +209,6 @@ class OCRResult(BaseCVResult):
         if self["model_settings"]["use_doc_preprocessor"]:
             data["doc_preprocessor_res"] = self["doc_preprocessor_res"].json["res"]
         data["dt_polys"] = self["dt_polys"]
-        data["dt_padded_polys"] = self["dt_padded_polys"]
         data["text_det_params"] = self["text_det_params"]
         data["text_type"] = self["text_type"]
         if "textline_orientation_angles" in self:
@@ -232,8 +219,6 @@ class OCRResult(BaseCVResult):
         data["rec_scores"] = self["rec_scores"]
         data["rec_polys"] = self["rec_polys"]
         data["rec_boxes"] = self["rec_boxes"]
-        data["rec_padded_polys"] = self["rec_padded_polys"]
-        data["rec_padded_boxes"] = self["rec_padded_boxes"]
         if "text_word_boxes" in self:
             data["text_word_boxes"] = self["text_word_boxes"]
             data["text_word"] = self["text_word"]
