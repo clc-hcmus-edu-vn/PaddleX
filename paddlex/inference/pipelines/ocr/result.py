@@ -99,6 +99,7 @@ class OCRResult(BaseCVResult):
                 boxes.append(word_region)
                 txts.append(text_word[idx])
         else:
+            boxes = self["rec_polys"]
             txts = self["rec_texts"]
         image = self["doc_preprocessor_res"]["output_img"]
         h, w = image.shape[0:2]
