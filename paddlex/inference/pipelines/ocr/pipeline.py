@@ -367,33 +367,28 @@ class _OCRPipeline(BasePipeline):
 
             dt_polys_list = [item["dt_polys"] for item in det_results]
             
-            dt_polys_list = [
-                [
-                    [
-                        [
-                            point[0] - self.text_rec_padding[0],
-                            point[1] - self.text_rec_padding[1],
-                        ],
-                        [
-                            point[0] + self.text_rec_padding[2],
-                            point[1] - self.text_rec_padding[1],
-                        ],
-                        [
-                            point[0] + self.text_rec_padding[2],
-                            point[1] + self.text_rec_padding[3],
-                        ],
-                        [
-                            point[0] - self.text_rec_padding[0],
-                            point[1] + self.text_rec_padding[3],
-                        ],
-                    ]
-                    for point in poly
-                ]
-                for item in det_results
-                for poly in item["dt_polys"]
-            ]
-
-            dt_polys_list = [self._sort_boxes(item) for item in dt_polys_list]
+            pl, pt, pr, pb = self.text_rec_padding
+            
+            padded_list = []
+            for polys in dt_polys_list:          # polys: shape (N, 4, 2)
+                x = polys[..., 0]               # shape (N, 4)
+                y = polys[..., 1]
+            
+                x_min = x.min(axis=1) - pl      # shape (N,)
+                y_min = y.min(axis=1) - pt
+                x_max = x.max(axis=1) + pr
+                y_max = y.max(axis=1) + pb
+            
+                padded = np.stack([
+                    np.stack([x_min, y_min], axis=1),
+                    np.stack([x_max, y_min], axis=1),
+                    np.stack([x_max, y_max], axis=1),
+                    np.stack([x_min, y_max], axis=1)
+                ], axis=1)  # shape (N, 4, 2)
+            
+                padded_list.append(padded.astype(polys.dtype))
+            
+            dt_polys_list = [self._sort_boxes(item) for item in padded_list]
 
             results = [
                 {
@@ -409,7 +404,6 @@ class _OCRPipeline(BasePipeline):
                     "rec_texts": [],
                     "rec_scores": [],
                     "rec_polys": [],
-                    "rec_padded_polys": [],
                     "vis_fonts": [],
                 }
                 for input_path, page_index, doc_preprocessor_res, dt_polys in zip(
@@ -500,13 +494,10 @@ class _OCRPipeline(BasePipeline):
                             res["rec_scores"].append(rec_res["rec_score"])
                             res["vis_fonts"].append(rec_res["vis_font"])
                             res["rec_polys"].append(dt_polys[sno])
-                            res["rec_padded_polys"].append(dt_padded_polys[sno])
             for res in results:
                 if self.text_type == "general":
                     rec_boxes = convert_points_to_boxes(res["rec_polys"])
                     res["rec_boxes"] = rec_boxes
-                    rec_padded_boxes = convert_points_to_boxes(res["rec_padded_polys"])
-                    res["rec_padded_boxes"] = rec_padded_boxes
                     if return_word_box:
                         res["text_word_boxes"] = [
                             convert_points_to_boxes(line)
