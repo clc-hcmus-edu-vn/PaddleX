@@ -365,7 +365,9 @@ class _OCRPipeline(BasePipeline):
                 self.text_det_model(doc_preprocessor_images, **text_det_params)
             )
 
-            dt_padded_polys_list = [
+            dt_polys_list = [item["dt_polys"] for item in det_results]
+            
+            dt_polys_list = [
                 [
                     [
                         [
@@ -388,14 +390,8 @@ class _OCRPipeline(BasePipeline):
                     for point in poly
                 ]
                 for item in det_results
-                for poly in item["dt_padded_polys"]
+                for poly in item["dt_polys"]
             ]
-
-            dt_padded_polys_list = [
-                self._sort_boxes(item) for item in dt_padded_polys_list
-            ]
-
-            dt_polys_list = [item["dt_polys"] for item in det_results]
 
             dt_polys_list = [self._sort_boxes(item) for item in dt_polys_list]
 
@@ -405,7 +401,6 @@ class _OCRPipeline(BasePipeline):
                     "page_index": page_index,
                     "doc_preprocessor_res": doc_preprocessor_res,
                     "dt_polys": dt_polys,
-                    "dt_padded_polys": dt_padded_polys,
                     "model_settings": model_settings,
                     "text_det_params": text_det_params,
                     "text_type": self.text_type,
@@ -417,17 +412,16 @@ class _OCRPipeline(BasePipeline):
                     "rec_padded_polys": [],
                     "vis_fonts": [],
                 }
-                for input_path, page_index, doc_preprocessor_res, dt_polys, dt_padded_polys in zip(
+                for input_path, page_index, doc_preprocessor_res, dt_polys in zip(
                     batch_data.input_paths,
                     batch_data.page_indexes,
                     doc_preprocessor_results,
                     dt_polys_list,
-                    dt_padded_polys_list,
                 )
             ]
 
             indices = list(range(len(doc_preprocessor_images)))
-            indices = [idx for idx in indices if len(dt_padded_polys_list[idx]) > 0]
+            indices = [idx for idx in indices if len(dt_polys_list[idx]) > 0]
 
             if indices:
                 all_subs_of_imgs = []
@@ -435,7 +429,7 @@ class _OCRPipeline(BasePipeline):
                 for idx in indices:
                     all_subs_of_img = list(
                         self._crop_by_polys(
-                            doc_preprocessor_images[idx], dt_padded_polys_list[idx]
+                            doc_preprocessor_images[idx], dt_polys_list[idx]
                         )
                     )
                     all_subs_of_imgs.extend(all_subs_of_img)
@@ -464,7 +458,7 @@ class _OCRPipeline(BasePipeline):
                         chunk_indices[i] : chunk_indices[i + 1]
                     ]
                     res = results[idx]
-                    dt_padded_polys = dt_padded_polys_list[idx]
+                    dt_padded_polys = dt_polys_list[idx]
                     dt_polys = dt_polys_list[idx]
                     sub_img_info_list = [
                         {
