@@ -102,7 +102,9 @@ class _OCRPipeline(BasePipeline):
             self.text_det_bbox_padding = text_det_config.get("bbox_padding", None)
             self.input_shape = text_det_config.get("input_shape", None)
             self.text_det_unclip_ratio = text_det_config.get("unclip_ratio", 2.0)
-            self._sort_boxes = SortQuadVertBoxes() if self.text_det_vert else SortQuadBoxes()
+            self._sort_boxes = (
+                SortQuadVertBoxes() if self.text_det_vert else SortQuadBoxes()
+            )
             self._crop_by_polys = CropByPolys(det_box_type="quad")
         elif self.text_type == "seal":
             self.text_det_limit_side_len = text_det_config.get("limit_side_len", 736)
@@ -133,6 +135,7 @@ class _OCRPipeline(BasePipeline):
             "TextRecognition",
             {"model_config_error": "config error for text_rec_model!"},
         )
+        self.text_rec_padding = text_rec_config.get("padding", [0, 0, 0, 0])
         self.text_rec_score_thresh = text_rec_config.get("score_thresh", 0)
         self.return_word_box = text_rec_config.get("return_word_box", False)
         self.input_shape = text_rec_config.get("input_shape", None)
@@ -362,10 +365,36 @@ class _OCRPipeline(BasePipeline):
                 self.text_det_model(doc_preprocessor_images, **text_det_params)
             )
 
-            dt_padded_polys_list = [item["dt_padded_polys"] for item in det_results]
+            dt_padded_polys_list = [
+                [
+                    [
+                        [
+                            point[0] - self.text_rec_padding[0],
+                            point[1] - self.text_rec_padding[1],
+                        ],
+                        [
+                            point[0] + self.text_rec_padding[2],
+                            point[1] - self.text_rec_padding[1],
+                        ],
+                        [
+                            point[0] + self.text_rec_padding[2],
+                            point[1] + self.text_rec_padding[3],
+                        ],
+                        [
+                            point[0] - self.text_rec_padding[0],
+                            point[1] + self.text_rec_padding[3],
+                        ],
+                    ]
+                    for point in poly
+                ]
+                for item in det_results
+                for poly in item["dt_padded_polys"]
+            ]
 
-            dt_padded_polys_list = [self._sort_boxes(item) for item in dt_padded_polys_list]
-            
+            dt_padded_polys_list = [
+                self._sort_boxes(item) for item in dt_padded_polys_list
+            ]
+
             dt_polys_list = [item["dt_polys"] for item in det_results]
 
             dt_polys_list = [self._sort_boxes(item) for item in dt_polys_list]
