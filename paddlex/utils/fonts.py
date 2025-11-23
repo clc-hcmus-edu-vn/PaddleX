@@ -93,10 +93,16 @@ class Font:
         """
         font_path = (Path(CACHE_DIR) / "fonts" / self._font_name).resolve().as_posix()
         if not Path(font_path).is_file():
-            download(
-                url=f"https://paddle-model-ecology.bj.bcebos.com/paddlex/PaddleX3.0/fonts/{self._font_name}",
-                save_path=font_path,
-            )
+            if self._font_name == "NomNaTong-Regular.ttf":
+                download(
+                    "https://github.com/clc-hcmus-edu-vn/CLCLabOCR/blob/180c803bf9dc67c38f29ef3f35f041c152649010/static/NomNaTong-Regular.ttf",
+                    save_path=font_path
+                )
+            else:
+                download(
+                    url=f"https://paddle-model-ecology.bj.bcebos.com/paddlex/PaddleX3.0/fonts/{self._font_name}",
+                    save_path=font_path,
+                )
         self._local_path = font_path
 
 
@@ -107,7 +113,7 @@ if Path(str(LOCAL_FONT_FILE_PATH)).is_file():
 
 PINGFANG_FONT = Font(font_name="PingFang-SC-Regular.ttf")
 SIMFANG_FONT = Font(font_name="simfang.ttf")
-NOMNATONG_FONT = Font()
+NOMNATONG_FONT = Font(font_name="NomNaTong-Regular.ttf")
 LATIN_FONT = Font(font_name="latin.ttf")
 TH_FONT = Font(font_name="th.ttf")
 EL_FONT = Font(font_name="el.ttf")

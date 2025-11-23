@@ -34,7 +34,7 @@ from .image_classification import ImageClassificationPipeline
 from .image_multilabel_classification import ImageMultiLabelClassificationPipeline
 from .instance_segmentation import InstanceSegmentationPipeline
 from .keypoint_detection import KeypointDetectionPipeline
-from .layout_parsing import LayoutParsingPipeline
+from .layout_parsing import LayoutParsingPipeline, LayoutParsingPipelineV3
 from .m_3d_bev_detection import BEVDet3DPipeline
 from .multilingual_speech_recognition import MultilingualSpeechRecognitionPipeline
 from .object_detection import ObjectDetectionPipeline

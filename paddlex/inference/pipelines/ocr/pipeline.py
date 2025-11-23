@@ -369,24 +369,38 @@ class _OCRPipeline(BasePipeline):
             
             pl, pt, pr, pb = self.text_rec_padding
             
-            padded_list = []
-            for polys in dt_polys_list:          # polys: shape (N, 4, 2)
-                x = polys[..., 0]               # shape (N, 4)
-                y = polys[..., 1]
+            # 1. Convert all polys to clean uniform arrays
+            dt_polys_list = [np.asarray(p) for p in dt_polys_list]
             
-                x_min = x.min(axis=1) - pl      # shape (N,)
-                y_min = y.min(axis=1) - pt
-                x_max = x.max(axis=1) + pr
-                y_max = y.max(axis=1) + pb
+            # 2. Concatenate all polys at once for vectorized computation
+            all_polys = np.concatenate(dt_polys_list, axis=0)   # shape (M,4,2), M = sum(N_i)
             
-                padded = np.stack([
-                    np.stack([x_min, y_min], axis=1),
-                    np.stack([x_max, y_min], axis=1),
-                    np.stack([x_max, y_max], axis=1),
-                    np.stack([x_min, y_max], axis=1)
-                ], axis=1)  # shape (N, 4, 2)
+            # Vectorized extraction of x,y
+            x = all_polys[..., 0]     # (M,4)
+            y = all_polys[..., 1]     # (M,4)
             
-                padded_list.append(padded.astype(polys.dtype))
+            # 3. Compute padded corners vectorized for all boxes
+            x_min = x.min(axis=1) - pl
+            y_min = y.min(axis=1) - pt
+            x_max = x.max(axis=1) + pr
+            y_max = y.max(axis=1) + pb
+            
+            # 4. Build padded polygons vectorized: shape (M,4,2)
+            all_padded = np.stack([
+                np.column_stack([x_min, y_min]),
+                np.column_stack([x_max, y_min]),
+                np.column_stack([x_max, y_max]),
+                np.column_stack([x_min, y_max])
+            ], axis=1)
+            
+            # 5. Split back into original structure — pure vectorized slicing, no loops inside math
+            sizes = [p.shape[0] for p in dt_polys_list]
+            offsets = np.cumsum([0] + sizes)
+            
+            padded_list = [
+                all_padded[offsets[i]: offsets[i+1]]
+                for i in range(len(sizes))
+            ]
             
             dt_polys_list = [self._sort_boxes(item) for item in padded_list]
 
