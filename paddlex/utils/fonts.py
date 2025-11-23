@@ -95,7 +95,7 @@ class Font:
         if not Path(font_path).is_file():
             if self._font_name == "NomNaTong-Regular.ttf":
                 download(
-                    "https://github.com/clc-hcmus-edu-vn/CLCLabOCR/blob/180c803bf9dc67c38f29ef3f35f041c152649010/static/NomNaTong-Regular.ttf",
+                    "https://drive.google.com/uc?export=download&id=1WXyesh0ylpmTvuhtT8fQuJY_Sy9Ux7iB",
                     save_path=font_path
                 )
             else:
