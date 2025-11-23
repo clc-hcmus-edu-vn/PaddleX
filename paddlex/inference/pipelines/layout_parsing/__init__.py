@@ -14,4 +14,3 @@
 
 from .pipeline import LayoutParsingPipeline
 from .pipeline_v2 import LayoutParsingPipelineV2
-from .pipeline_v3 import LayoutParsingPipelineV3

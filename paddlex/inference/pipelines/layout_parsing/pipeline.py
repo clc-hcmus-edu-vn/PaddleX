@@ -248,28 +248,6 @@ class _LayoutParsingPipeline(BasePipeline):
                         matched_ocr_dict[matched_idx].append(object_box_idx)
                 single_box_res["block_content"] = "\n".join(ocr_res_in_box["rec_texts"])
             layout_parsing_res.append(single_box_res)
-        for layout_box_ids in matched_ocr_dict.values():
-            # one ocr is matched to multiple layout boxes, split the text into multiple lines
-            if len(layout_box_ids) > 1:
-                for idx in layout_box_ids:
-                    wht_im = np.ones(image.shape, dtype=image.dtype) * 255
-                    box = layout_parsing_res[idx]["block_bbox"]
-                    x1, y1, x2, y2 = [int(i) for i in box]
-                    wht_im[y1:y2, x1:x2, :] = image[y1:y2, x1:x2, :]
-                    sub_ocr_res = list(
-                        self.general_ocr_pipeline(
-                            wht_im,
-                            text_det_limit_side_len=text_det_limit_side_len,
-                            text_det_limit_type=text_det_limit_type,
-                            text_det_thresh=text_det_thresh,
-                            text_det_box_thresh=text_det_box_thresh,
-                            text_det_unclip_ratio=text_det_unclip_ratio,
-                            text_rec_score_thresh=text_rec_score_thresh,
-                        )
-                    )[0]
-                    layout_parsing_res[idx]["block_content"] = "\n".join(
-                        sub_ocr_res["rec_texts"]
-                    )
 
         ocr_without_layout_boxes = get_sub_regions_ocr_res(
             overall_ocr_res, object_boxes, flag_within=False
