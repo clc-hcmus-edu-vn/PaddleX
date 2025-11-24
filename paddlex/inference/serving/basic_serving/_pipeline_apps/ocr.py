@@ -61,6 +61,8 @@ def create_pipeline_app(pipeline: Any, app_config: AppConfig) -> "FastAPI":
             text_det_unclip_ratio=request.textDetUnclipRatio,
             text_rec_score_thresh=request.textRecScoreThresh,
             return_word_box=request.returnWordBox,
+            dt_only=request.dtOnly,
+            dt_polys=request.dtPolys,
         )
 
         ocr_results: List[Dict[str, Any]] = []

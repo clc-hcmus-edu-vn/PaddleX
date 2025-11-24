@@ -43,6 +43,8 @@ class InferRequest(ocr.BaseInferRequest):
     textRecScoreThresh: Optional[float] = None
     returnWordBox: Optional[bool] = None
     visualize: Optional[bool] = None
+    dtOnly: Optional[bool] = None
+    dtPolys: Optional[List[List[List[int]]]] = None
 
 
 class OCRResult(BaseModel):
