@@ -301,6 +301,8 @@ class _OCRPipeline(BasePipeline):
         text_det_unclip_ratio: Optional[float] = None,
         text_rec_score_thresh: Optional[float] = None,
         return_word_box: Optional[bool] = None,
+        dt_only: Optional[bool] = None,
+        dt_polys: Optional[List[List[List[int]]]] = None,
     ) -> OCRResult:
         """
         Predict OCR results based on input images or arrays with optional preprocessing steps.
@@ -318,9 +320,12 @@ class _OCRPipeline(BasePipeline):
             text_det_unclip_ratio (Optional[float]): Ratio for unclipping text detection boxes.
             text_rec_score_thresh (Optional[float]): Score threshold for text recognition.
             return_word_box (Optional[bool]): Whether to return word boxes along with recognized texts.
+            dt_only (Optional[bool]): If set to True, the pipeline will only perform text detection and skip text recognition.
+            dt_polys (Optional[List[List[List[int]]]]): If dt_polys is provided, use it directly for text detection.                
         Returns:
             OCRResult: Generator yielding OCR results for each input image.
         """
+        dt_only = dt_only or False
 
         model_settings = self.get_model_settings(
             use_doc_orientation_classify, use_doc_unwarping, use_textline_orientation
@@ -360,49 +365,51 @@ class _OCRPipeline(BasePipeline):
             doc_preprocessor_images = [
                 item["output_img"] for item in doc_preprocessor_results
             ]
-
-            det_results = list(
-                self.text_det_model(doc_preprocessor_images, **text_det_params)
-            )
-
-            dt_polys_list = [item["dt_polys"] for item in det_results]
-            
-            pl, pt, pr, pb = self.text_rec_padding
-            
-            # 1. Convert all polys to clean uniform arrays
-            dt_polys_list = [np.asarray(p) for p in dt_polys_list]
-            
-            # 2. Concatenate all polys at once for vectorized computation
-            all_polys = np.concatenate(dt_polys_list, axis=0)   # shape (M,4,2), M = sum(N_i)
-            
-            # Vectorized extraction of x,y
-            x = all_polys[..., 0]     # (M,4)
-            y = all_polys[..., 1]     # (M,4)
-            
-            # 3. Compute padded corners vectorized for all boxes
-            x_min = x.min(axis=1) - pl
-            y_min = y.min(axis=1) - pt
-            x_max = x.max(axis=1) + pr
-            y_max = y.max(axis=1) + pb
-            
-            # 4. Build padded polygons vectorized: shape (M,4,2)
-            all_padded = np.stack([
-                np.column_stack([x_min, y_min]),
-                np.column_stack([x_max, y_min]),
-                np.column_stack([x_max, y_max]),
-                np.column_stack([x_min, y_max])
-            ], axis=1)
-            
-            # 5. Split back into original structure — pure vectorized slicing, no loops inside math
-            sizes = [p.shape[0] for p in dt_polys_list]
-            offsets = np.cumsum([0] + sizes)
-            
-            padded_list = [
-                all_padded[offsets[i]: offsets[i+1]]
-                for i in range(len(sizes))
-            ]
-            
-            dt_polys_list = [self._sort_boxes(item) for item in padded_list]
+            if not dt_polys:
+                det_results = list(
+                    self.text_det_model(doc_preprocessor_images, **text_det_params)
+                )
+    
+                dt_polys_list = [item["dt_polys"] for item in det_results]
+                
+                pl, pt, pr, pb = self.text_rec_padding
+                
+                # 1. Convert all polys to clean uniform arrays
+                dt_polys_list = [np.asarray(p) for p in dt_polys_list]
+                
+                # 2. Concatenate all polys at once for vectorized computation
+                all_polys = np.concatenate(dt_polys_list, axis=0)   # shape (M,4,2), M = sum(N_i)
+                
+                # Vectorized extraction of x,y
+                x = all_polys[..., 0]     # (M,4)
+                y = all_polys[..., 1]     # (M,4)
+                
+                # 3. Compute padded corners vectorized for all boxes
+                x_min = x.min(axis=1) - pl
+                y_min = y.min(axis=1) - pt
+                x_max = x.max(axis=1) + pr
+                y_max = y.max(axis=1) + pb
+                
+                # 4. Build padded polygons vectorized: shape (M,4,2)
+                all_padded = np.stack([
+                    np.column_stack([x_min, y_min]),
+                    np.column_stack([x_max, y_min]),
+                    np.column_stack([x_max, y_max]),
+                    np.column_stack([x_min, y_max])
+                ], axis=1)
+                
+                # 5. Split back into original structure — pure vectorized slicing, no loops inside math
+                sizes = [p.shape[0] for p in dt_polys_list]
+                offsets = np.cumsum([0] + sizes)
+                
+                padded_list = [
+                    all_padded[offsets[i]: offsets[i+1]]
+                    for i in range(len(sizes))
+                ]
+                
+                dt_polys_list = [self._sort_boxes(item) for item in padded_list]
+            else:
+                dt_polys_list = [np.asarray(p) for p in dt_polys]
 
             results = [
                 {
@@ -431,7 +438,7 @@ class _OCRPipeline(BasePipeline):
             indices = list(range(len(doc_preprocessor_images)))
             indices = [idx for idx in indices if len(dt_polys_list[idx]) > 0]
 
-            if indices:
+            if indices and not dt_only:
                 all_subs_of_imgs = []
                 chunk_indices = [0]
                 for idx in indices:
