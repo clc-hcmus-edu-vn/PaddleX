@@ -302,7 +302,7 @@ class _OCRPipeline(BasePipeline):
         text_rec_score_thresh: Optional[float] = None,
         return_word_box: Optional[bool] = None,
         dt_only: Optional[bool] = None,
-        dt_polys: Optional[List[List[List[int]]]] = None,
+        precompute_dt_polys_list: Optional[List[List[List[List[int]]]]] = None,
     ) -> OCRResult:
         """
         Predict OCR results based on input images or arrays with optional preprocessing steps.
@@ -321,7 +321,7 @@ class _OCRPipeline(BasePipeline):
             text_rec_score_thresh (Optional[float]): Score threshold for text recognition.
             return_word_box (Optional[bool]): Whether to return word boxes along with recognized texts.
             dt_only (Optional[bool]): If set to True, the pipeline will only perform text detection and skip text recognition.
-            dt_polys (Optional[List[List[List[int]]]]): If dt_polys is provided, use it directly for text detection.                
+            precompute_dt_polys_list (Optional[List[List[List[List[int]]]]]): If dt_polys is provided, use it directly for text detection.                
         Returns:
             OCRResult: Generator yielding OCR results for each input image.
         """
@@ -365,7 +365,7 @@ class _OCRPipeline(BasePipeline):
             doc_preprocessor_images = [
                 item["output_img"] for item in doc_preprocessor_results
             ]
-            if not dt_polys:
+            if not precompute_dt_polys_list:
                 det_results = list(
                     self.text_det_model(doc_preprocessor_images, **text_det_params)
                 )
@@ -408,9 +408,8 @@ class _OCRPipeline(BasePipeline):
                 
                 dt_polys_list = [self._sort_boxes(item) for item in padded_list]
             else:
-                dt_polys_list = [np.asarray(p) for p in dt_polys]
-                dt_scores_list = []
-
+                dt_polys_list = list(map(lambda dt_polys: [np.asarray(p) for p in dt_polys], precompute_dt_polys_list))
+                dt_scores_list = [[-1] * len(dt_polys) for dt_polys in dt_polys_list]
             results = [
                 {
                     "input_path": input_path,
@@ -476,7 +475,7 @@ class _OCRPipeline(BasePipeline):
                     ]
                     res = results[idx]
                     dt_padded_polys = dt_polys_list[idx]
-                    dt_polys = dt_polys_list[idx]
+                    precompute_dt_polys_list = dt_polys_list[idx]
                     sub_img_info_list = [
                         {
                             "sub_img_id": img_id,
@@ -516,7 +515,7 @@ class _OCRPipeline(BasePipeline):
                                 res["rec_texts"].append(rec_res["rec_text"])
                             res["rec_scores"].append(rec_res["rec_score"])
                             res["vis_fonts"].append(rec_res["vis_font"])
-                            res["rec_polys"].append(dt_polys[sno])
+                            res["rec_polys"].append(precompute_dt_polys_list[sno])
             for res in results:
                 if self.text_type == "general":
                     rec_boxes = convert_points_to_boxes(res["rec_polys"])

@@ -44,7 +44,7 @@ class InferRequest(ocr.BaseInferRequest):
     returnWordBox: Optional[bool] = None
     visualize: Optional[bool] = None
     dtOnly: Optional[bool] = None
-    dtPolys: Optional[List[List[List[int]]]] = None
+    precomputedDtPolys: Optional[List[List[List[List[int]]]]] = None
 
 
 class OCRResult(BaseModel):
