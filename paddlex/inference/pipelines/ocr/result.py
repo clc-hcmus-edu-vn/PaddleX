@@ -170,6 +170,7 @@ class OCRResult(BaseCVResult):
             if self["text_type"] == "seal"
             else np.array(self["dt_polys"])
         )
+        data["dt_scores"] = np.array(self["dt_scores"])
         data["text_det_params"] = self["text_det_params"]
         data["text_type"] = self["text_type"]
         if "textline_orientation_angles" in self:
@@ -210,6 +211,7 @@ class OCRResult(BaseCVResult):
         if self["model_settings"]["use_doc_preprocessor"]:
             data["doc_preprocessor_res"] = self["doc_preprocessor_res"].json["res"]
         data["dt_polys"] = self["dt_polys"]
+        data["dt_scores"] = self["dt_scores"]
         data["text_det_params"] = self["text_det_params"]
         data["text_type"] = self["text_type"]
         if "textline_orientation_angles" in self:

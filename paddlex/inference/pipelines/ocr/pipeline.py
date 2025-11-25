@@ -371,6 +371,7 @@ class _OCRPipeline(BasePipeline):
                 )
     
                 dt_polys_list = [item["dt_polys"] for item in det_results]
+                dt_scores_list = [item["dt_scores"] for item in det_results]
                 
                 pl, pt, pr, pb = self.text_rec_padding
                 
@@ -410,6 +411,7 @@ class _OCRPipeline(BasePipeline):
                 dt_polys_list = [self._sort_boxes(item) for item in padded_list]
             else:
                 dt_polys_list = [np.asarray(p) for p in dt_polys]
+                dt_scores_list = []
 
             results = [
                 {
@@ -417,6 +419,7 @@ class _OCRPipeline(BasePipeline):
                     "page_index": page_index,
                     "doc_preprocessor_res": doc_preprocessor_res,
                     "dt_polys": dt_polys,
+                    "dt_scores": dt_scores,
                     "model_settings": model_settings,
                     "text_det_params": text_det_params,
                     "text_type": self.text_type,
@@ -427,11 +430,12 @@ class _OCRPipeline(BasePipeline):
                     "rec_polys": [],
                     "vis_fonts": [],
                 }
-                for input_path, page_index, doc_preprocessor_res, dt_polys in zip(
+                for input_path, page_index, doc_preprocessor_res, dt_polys, dt_scores in zip(
                     batch_data.input_paths,
                     batch_data.page_indexes,
                     doc_preprocessor_results,
                     dt_polys_list,
+                    dt_scores_list
                 )
             ]
 
