@@ -374,39 +374,37 @@ class _OCRPipeline(BasePipeline):
                 dt_scores_list = [item["dt_scores"] for item in det_results]
                 
                 pl, pt, pr, pb = self.text_rec_padding
+                padded_list = []
+                for polys in dt_polys_list:
                 
-                # 1. Convert all polys to clean uniform arrays
-                dt_polys_list = [np.asarray(p) for p in dt_polys_list]
+                    # ----- case 1: empty polys -----
+                    if polys is None or len(polys) == 0:
+                        padded_list.append([])
+                        continue
                 
-                # 2. Concatenate all polys at once for vectorized computation
-                all_polys = np.concatenate(dt_polys_list, axis=0)   # shape (M,4,2), M = sum(N_i)
+                    # polys: shape (N,4,2)
+                    p = np.asarray(polys)
                 
-                # Vectorized extraction of x,y
-                x = all_polys[..., 0]     # (M,4)
-                y = all_polys[..., 1]     # (M,4)
+                    # extract x,y
+                    x = p[..., 0]   # (N,4)
+                    y = p[..., 1]   # (N,4)
                 
-                # 3. Compute padded corners vectorized for all boxes
-                x_min = x.min(axis=1) - pl
-                y_min = y.min(axis=1) - pt
-                x_max = x.max(axis=1) + pr
-                y_max = y.max(axis=1) + pb
+                    # padded corners
+                    x_min = x.min(axis=1) - pl
+                    y_min = y.min(axis=1) - pt
+                    x_max = x.max(axis=1) + pr
+                    y_max = y.max(axis=1) + pb
                 
-                # 4. Build padded polygons vectorized: shape (M,4,2)
-                all_padded = np.stack([
-                    np.column_stack([x_min, y_min]),
-                    np.column_stack([x_max, y_min]),
-                    np.column_stack([x_max, y_max]),
-                    np.column_stack([x_min, y_max])
-                ], axis=1)
+                    # build padded polys: shape (N,4,2)
+                    padded = np.stack([
+                        np.column_stack([x_min, y_min]),
+                        np.column_stack([x_max, y_min]),
+                        np.column_stack([x_max, y_max]),
+                        np.column_stack([x_min, y_max]),
+                    ], axis=1)
                 
-                # 5. Split back into original structure — pure vectorized slicing, no loops inside math
-                sizes = [p.shape[0] for p in dt_polys_list]
-                offsets = np.cumsum([0] + sizes)
-                
-                padded_list = [
-                    all_padded[offsets[i]: offsets[i+1]]
-                    for i in range(len(sizes))
-                ]
+                    # sort                
+                    padded_list.append(padded)
                 
                 dt_polys_list = [self._sort_boxes(item) for item in padded_list]
             else:
